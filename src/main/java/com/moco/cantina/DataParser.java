@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,36 +18,33 @@ public class DataParser {
         this.data = data;
     }
 
-    public void search(String searchCriteria) {
+    public List<JsonNode> search(String searchCriteria) {
         if (searchCriteria.startsWith(".")) {
-            search("classNames", searchCriteria.substring(1), getJsonData());
+            return search("classNames", searchCriteria.substring(1), getJsonData());
         } else if (searchCriteria.startsWith("#")) {
-            search("identifier", searchCriteria.substring(1), getJsonData());
+            return search("identifier", searchCriteria.substring(1), getJsonData());
         } else {
-            search("class", searchCriteria, getJsonData());
+            return search("class", searchCriteria, getJsonData());
         }
     }
 
-    private void search(String field, String value, JsonNode data) {
+    private List<JsonNode> search(String field, String value, JsonNode data) {
+        List<JsonNode> nodesFound = new ArrayList<>();
+
         // Check this node based on search criteria.
         if (data.has(field)) {
-            boolean nodeFound = false;
             JsonNode jsonNode = data.get(field);
             if (jsonNode instanceof ArrayNode) {
                 ArrayNode arrayNode = (ArrayNode) jsonNode;
                 Iterator<JsonNode> arrayIterator = arrayNode.elements();
                 while (arrayIterator.hasNext()) {
                     if (arrayIterator.next().asText().equals(value)) {
-                        nodeFound = true;
+                        nodesFound.add(data);
                         break;
                     }
                 }
             } else if (jsonNode.asText().equals(value)) {
-                nodeFound = true;
-            }
-
-            if (nodeFound) {
-                System.out.printf("Node Found: %n%s%n", data.toPrettyString());
+                nodesFound.add(data);
             }
         }
 
@@ -59,12 +56,14 @@ public class DataParser {
                 ArrayNode arrayNode = (ArrayNode) next;
                 Iterator<JsonNode> arrayIterator = arrayNode.elements();
                 while (arrayIterator.hasNext()) {
-                    search(field, value, arrayIterator.next());
+                    nodesFound.addAll(search(field, value, arrayIterator.next()));
                 }
             } else if (next instanceof ObjectNode) {
-                search(field, value, next);
+                nodesFound.addAll(search(field, value, next));
             }
         }
+
+        return nodesFound;
     }
 
     private JsonNode getJsonData() {

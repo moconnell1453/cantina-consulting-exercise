@@ -1,5 +1,7 @@
 package com.moco.cantina;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -19,7 +21,11 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String searchCriteria = scanner.next();
-            dataParser.search(searchCriteria);
+            List<JsonNode> nodesFound = dataParser.search(searchCriteria);
+            System.out.printf("Found %d matching search criteria.%n", nodesFound.size());
+            for (int i = 0; i < nodesFound.size(); i ++) {
+                System.out.printf("Node %d:%n%s%n", i+1, nodesFound.get(i).toPrettyString());
+            }
         }
 
         System.out.println();
